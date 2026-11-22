@@ -2,6 +2,10 @@
 
 *[English](#english) · [简体中文](#简体中文)*
 
+<p align="center">
+  <img src="docs/dashboard.png" alt="Super Thanks report dashboard" width="760">
+</p>
+
 Count the **real** "Super Thanks" (超级感谢 / 投げ銭 / 후원) donations across a whole
 YouTube channel — not just a single video — and view the results in a clean,
 Apple‑style dashboard that opens right in your browser.

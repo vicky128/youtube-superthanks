@@ -3,7 +3,7 @@
 *[English](#english) · [简体中文](#简体中文)*
 
 <p align="center">
-  <img src="docs/dashboard.png" alt="Super Thanks report dashboard" width="760">
+  <img src="docs/dashboard.png" alt="Super Thanks local web UI" width="820">
 </p>
 
 Count the **real** "Super Thanks" (超级感谢 / 投げ銭 / 후원) donations across a whole

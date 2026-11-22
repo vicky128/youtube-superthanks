@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Super Thanks Viewer</title>
+<meta name="description" content="View YouTube Super Thanks donation reports in your browser — a static dashboard for reports exported by yt_superthanks.">
+<style>
+:root{
+  --bg:#ffffff; --section:#f5f5f7; --card:#ffffff; --field:#ffffff;
+  --txt:#1d1d1f; --muted:#6e6e73; --faint:#86868b;
+  --line:#d2d2d7; --line-soft:#e8e8ed;
+  --accent:#0071e3; --accent-hover:#0077ed; --accent-soft:#e8f1fd;
+  --ok:#248a3d; --err:#d70015;
+  --shadow:0 4px 24px rgba(0,0,0,.06); --shadow-sm:0 1px 3px rgba(0,0,0,.05);
+  --radius:20px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#000000; --section:#000000; --card:#1c1c1e; --field:#1c1c1e;
+    --txt:#f5f5f7; --muted:#a1a1a6; --faint:#86868b;
+    --line:#38383a; --line-soft:#2c2c2e;
+    --accent:#0a84ff; --accent-hover:#409cff; --accent-soft:#0a2a4d;
+    --ok:#30d158; --err:#ff453a;
+    --shadow:0 4px 30px rgba(0,0,0,.5); --shadow-sm:0 1px 3px rgba(0,0,0,.4);
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+body{margin:0;background:var(--bg);color:var(--txt);
+font:17px/1.47 -apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Segoe UI",Roboto,"PingFang SC","Hiragino Sans","Microsoft YaHei",sans-serif;}
+.wrap{max-width:980px;margin:0 auto;padding:16px}
+/* top bar */
+.topbar{max-width:980px;margin:0 auto;padding:14px 16px;display:flex;align-items:center;
+justify-content:space-between;gap:12px}
+.brand{font-size:17px;font-weight:600;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
+.brand .dot{width:9px;height:9px;border-radius:50%;background:linear-gradient(135deg,#0071e3,#ff2d55)}
+.langsel{position:relative}
+.langsel select{-webkit-appearance:none;appearance:none;background:var(--section);border:1px solid var(--line-soft);
+color:var(--txt);border-radius:980px;padding:7px 30px 7px 14px;font-size:14px;cursor:pointer;outline:none}
+.langsel::after{content:"";position:absolute;right:13px;top:50%;width:7px;height:7px;
+border-right:1.6px solid var(--faint);border-bottom:1.6px solid var(--faint);
+transform:translateY(-70%) rotate(45deg);pointer-events:none}
+/* hero */
+.hero{text-align:center;padding:40px 16px 26px}
+h1{font-size:clamp(32px,6vw,52px);line-height:1.05;margin:0 0 14px;font-weight:600;letter-spacing:-.015em}
+h1 .grad{background:linear-gradient(90deg,#0071e3,#9b5cff 65%,#ff2d55);
+-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--muted);margin:0 auto;max-width:620px;font-size:clamp(16px,2.2vw,20px);line-height:1.4}
+/* cards */
+.card{background:var(--card);border:1px solid var(--line-soft);border-radius:var(--radius);
+padding:26px;margin-bottom:20px;box-shadow:var(--shadow)}
+.flex{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.flex strong{font-size:19px;font-weight:600;letter-spacing:-.01em}
+/* drop zone */
+.drop{border:2px dashed var(--line);border-radius:16px;padding:40px 20px;text-align:center;
+cursor:pointer;transition:border-color .15s,background .15s}
+.drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.drop .big{font-size:19px;font-weight:600;margin-bottom:6px}
+.drop .small{color:var(--muted);font-size:14px}
+.drop .ic{font-size:34px;line-height:1;margin-bottom:12px;opacity:.8}
+.rowbtns{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;align-items:center}
+button{background:var(--accent);border:0;color:#fff;font-weight:400;border-radius:980px;
+padding:11px 22px;font-size:16px;cursor:pointer;transition:background .15s,transform .06s,opacity .15s;line-height:1.2}
+button:hover{background:var(--accent-hover)}button:active{transform:scale(.97)}
+.btn-ghost{background:transparent;color:var(--accent);border:1px solid transparent}
+.btn-ghost:hover{background:var(--accent-soft)}
+textarea{width:100%;min-height:120px;background:var(--field);border:1px solid var(--line);color:var(--txt);
+border-radius:12px;padding:12px 14px;font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;
+outline:none;resize:vertical}
+textarea:focus{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+.help{font-size:14px;color:var(--muted);line-height:1.6;margin-top:18px;border-top:1px solid var(--line-soft);padding-top:16px}
+.help code{background:var(--section);border-radius:6px;padding:2px 7px;font:13px ui-monospace,Menlo,monospace;color:var(--txt)}
+.help details summary{cursor:pointer;color:var(--accent);list-style:none;font-size:14px}
+.help details summary::-webkit-details-marker{display:none}
+.help details summary::before{content:"⌄ "}
+.help details[open] summary::before{content:"⌃ "}
+.help pre{background:var(--section);border-radius:12px;padding:14px;overflow:auto;
+font:13px/1.6 ui-monospace,Menlo,monospace;color:var(--txt);margin:10px 0 0}
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.stat{background:var(--section);border-radius:16px;padding:22px 16px;text-align:center}
+.stat .v{font-size:30px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.stat .v.big{font-size:40px;color:var(--ok)}
+.stat .k{font-size:13px;color:var(--muted);margin-top:4px}
+@media (max-width:560px){
+  .stats{grid-template-columns:1fr}
+  .hero{padding:26px 16px 16px}
+  .card{padding:20px}
+  .stat .v{font-size:26px}.stat .v.big{font-size:34px}
+}
+.note{font-size:13px;color:var(--faint);margin-top:12px;line-height:1.5}
+/* chips */
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.chip{background:var(--section);border-radius:999px;padding:7px 14px;font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums}
+.chip b{color:var(--txt);font-weight:600}
+/* table */
+table{width:100%;border-collapse:collapse;font-size:15px}
+th,td{text-align:left;padding:12px 10px;border-bottom:1px solid var(--line-soft)}
+th{color:var(--faint);font-weight:500;font-size:12px;cursor:pointer;user-select:none;text-transform:uppercase;letter-spacing:.02em}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+tbody tr{transition:background .1s}tbody tr:hover td{background:var(--section)}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.pill{display:inline-block;font-size:12px;color:var(--muted);background:var(--section);border-radius:999px;padding:2px 9px;margin-left:8px}
+.err{color:var(--err)}.err.pill{background:transparent;border:1px solid var(--err)}
+.donlist{max-height:420px;overflow:auto;margin-top:10px}
+.don{display:flex;justify-content:space-between;gap:14px;padding:11px 2px;border-bottom:1px solid var(--line-soft)}
+.don .amt{color:var(--ok);font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums}
+.don .msg{color:var(--muted);font-size:14px}
+.hide{display:none}
+.banner{font-size:13px;color:var(--err);margin-top:10px}
+footer{max-width:980px;margin:0 auto;padding:20px 16px 60px;color:var(--faint);font-size:13px;text-align:center;line-height:1.6}
+footer a{color:var(--faint);text-decoration:underline}
+</style></head>
+<body>
+<div class="topbar">
+  <div class="brand"><span class="dot"></span><span>Super Thanks Viewer</span></div>
+  <div class="langsel"><select id="lang" aria-label="Language"></select></div>
+</div>
+
+<div class="hero">
+  <h1 data-i="title"></h1>
+  <p class="sub" data-i="tagline"></p>
+</div>
+
+<div class="wrap">
+  <!-- loader -->
+  <div class="card" id="loadcard">
+    <div class="drop" id="drop">
+      <div class="ic">📄</div>
+      <div class="big" data-i="dropBig"></div>
+      <div class="small" data-i="dropSmall"></div>
+    </div>
+    <div class="rowbtns">
+      <button id="pick" data-i="pickBtn"></button>
+      <button class="btn-ghost" id="togglePaste" data-i="pasteBtn"></button>
+      <input type="file" id="file" accept=".json,.csv,application/json,text/csv" class="hide">
+    </div>
+    <div id="pasteWrap" class="hide" style="margin-top:14px">
+      <textarea id="paste" spellcheck="false" placeholder='{ "currency": "USD", "videos": [ ... ] }'></textarea>
+      <div class="rowbtns"><button id="pasteGo" data-i="pasteGo"></button></div>
+    </div>
+    <div class="banner hide" id="banner"></div>
+    <div class="help">
+      <details id="howto">
+        <summary data-i="howToSummary"></summary>
+        <p data-i="howToBody" style="margin:10px 0 0"></p>
+        <pre data-i="howToCmd"></pre>
+      </details>
+    </div>
+  </div>
+
+  <!-- summary -->
+  <div class="card hide" id="summary">
+    <div class="flex" style="margin-bottom:16px">
+      <strong id="repTitle"></strong>
+      <button class="btn-ghost" id="loadAnother" data-i="loadAnother"></button>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="v big" id="s_total">—</div><div class="k" data-i="statTotal"></div></div>
+      <div class="stat"><div class="v" id="s_tips">—</div><div class="k" data-i="statTips"></div></div>
+      <div class="stat"><div class="v" id="s_vids">—</div><div class="k" data-i="statVids"></div></div>
+    </div>
+    <div class="note" data-i="grossNote"></div>
+    <div style="margin-top:14px"><label style="font-size:12px;color:var(--faint);text-transform:uppercase;letter-spacing:.02em" data-i="breakdown"></label>
+      <div class="chips" id="breakdown"></div></div>
+  </div>
+
+  <!-- single-video donation list -->
+  <div class="card hide" id="donwrap">
+    <div class="flex"><strong data-i="donTitle"></strong><span class="pill" id="donpill"></span></div>
+    <div class="donlist" id="donlist"></div>
+  </div>
+
+  <!-- ranking table -->
+  <div class="card hide" id="tablewrap">
+    <div class="flex"><strong data-i="rankTitle"></strong><span class="pill" id="tabhint"></span></div>
+    <div style="overflow:auto"><table><thead><tr>
+      <th class="num">#</th>
+      <th data-k="title" data-i="thTitle"></th>
+      <th data-k="tip_count" class="num" data-i="thTips"></th>
+      <th data-k="total" class="num" data-i="thAmount"></th>
+      <th data-k="view_count" class="num" data-i="thViews"></th>
+    </tr></thead><tbody id="tbody"></tbody></table></div>
+  </div>
+</div>
+
+<footer>
+  <span data-i="footPrivacy"></span> ·
+  <a href="https://github.com/" id="repoLink" target="_blank" rel="noopener" data-i="footRepo"></a>
+</footer>
+
+<script>
+/* ---------------- i18n ---------------- */
+const LANGS = {
+  "zh-CN":"简体中文","zh-TW":"繁體中文","en":"English","ja":"日本語","ko":"한국어","es":"Español"
+};
+const T = {
+  "zh-CN":{
+    title:(h)=>`YouTube <span class="grad">Super Thanks</span> 报告查看器`,
+    tagline:"打开扫描器导出的报告，立即看到苹果风仪表盘。全程在你的浏览器里，数据不上传。",
+    dropBig:"把报告文件拖到这里",
+    dropSmall:"支持 yt_superthanks 导出的 .json 或 .csv",
+    pickBtn:"选择文件", pasteBtn:"粘贴 JSON", pasteGo:"加载",
+    loadAnother:"换一个",
+    howToSummary:"报告从哪来？（本地生成，几步搞定）",
+    howToBody:"浏览器无法直接抓取 YouTube（跨域限制），所以扫描在本地用 Python 工具完成，再把导出的报告拖进这个页面查看。",
+    howToCmd:"pip3 install -U yt-dlp\npython3 yt_superthanks.py \"https://www.youtube.com/@某频道\" -c USD\n# 生成 superthanks_report.json → 拖进本页",
+    statTotal:"总打赏（毛额）", statTips:"打赏笔数", statVids:"视频数（有打赏/总）",
+    grossNote:"毛额＝观众支付总额；博主实际到手约 70%（YouTube 抽成约 30%）。金额以报告导出时的货币为准。",
+    breakdown:"各货币明细",
+    donTitle:"打赏明细", rankTitle:"各视频排行", tabhint:"点表头可排序",
+    thTitle:"标题", thTips:"笔数", thAmount:"金额", thViews:"播放",
+    noTips:"暂无打赏",
+    errParse:"无法解析这个文件，请确认是 yt_superthanks 导出的 .json 或 .csv。",
+    errEmpty:"报告里没有视频数据。",
+    footPrivacy:"纯静态页面，所有解析都在你的浏览器本地完成。", footRepo:"项目源码"
+  },
+  "zh-TW":{
+    title:(h)=>`YouTube <span class="grad">Super Thanks</span> 報告檢視器`,
+    tagline:"開啟掃描器匯出的報告，立即看到蘋果風儀表板。全程在你的瀏覽器裡，資料不上傳。",
+    dropBig:"把報告檔案拖到這裡",
+    dropSmall:"支援 yt_superthanks 匯出的 .json 或 .csv",
+    pickBtn:"選擇檔案", pasteBtn:"貼上 JSON", pasteGo:"載入",
+    loadAnother:"換一個",
+    howToSummary:"報告從哪來？（本機產生，幾步搞定）",
+    howToBody:"瀏覽器無法直接抓取 YouTube（跨來源限制），所以掃描在本機用 Python 工具完成，再把匯出的報告拖進這個頁面檢視。",
+    howToCmd:"pip3 install -U yt-dlp\npython3 yt_superthanks.py \"https://www.youtube.com/@某頻道\" -c USD\n# 產生 superthanks_report.json → 拖進本頁",
+    statTotal:"總抖內（毛額）", statTips:"抖內筆數", statVids:"影片數（有抖內/總）",
+    grossNote:"毛額＝觀眾支付總額；創作者實際到手約 70%（YouTube 抽成約 30%）。金額以報告匯出時的貨幣為準。",
+    breakdown:"各貨幣明細",
+    donTitle:"抖內明細", rankTitle:"各影片排行", tabhint:"點表頭可排序",
+    thTitle:"標題", thTips:"筆數", thAmount:"金額", thViews:"觀看",
+    noTips:"暫無抖內",
+    errParse:"無法解析這個檔案，請確認是 yt_superthanks 匯出的 .json 或 .csv。",
+    errEmpty:"報告裡沒有影片資料。",
+    footPrivacy:"純靜態頁面，所有解析都在你的瀏覽器本機完成。", footRepo:"專案原始碼"
+  },
+  "en":{
+    title:(h)=>`YouTube <span class="grad">Super Thanks</span> Report Viewer`,
+    tagline:"Open a report exported by the scanner and see an Apple-style dashboard instantly. Everything stays in your browser — nothing is uploaded.",
+    dropBig:"Drop a report file here",
+    dropSmall:"Accepts the .json or .csv exported by yt_superthanks",
+    pickBtn:"Choose file", pasteBtn:"Paste JSON", pasteGo:"Load",
+    loadAnother:"Load another",
+    howToSummary:"Where do reports come from? (generated locally, a few steps)",
+    howToBody:"Browsers can't scrape YouTube directly (cross-origin limits), so scanning runs locally with the Python tool; then drag the exported report onto this page to view it.",
+    howToCmd:"pip3 install -U yt-dlp\npython3 yt_superthanks.py \"https://www.youtube.com/@channel\" -c USD\n# produces superthanks_report.json → drop it here",
+    statTotal:"Total tips (gross)", statTips:"Tips", statVids:"Videos (with tips / total)",
+    grossNote:"Gross = what viewers paid; creators keep roughly 70% after YouTube's ~30% cut. Amounts are in the currency the report was exported in.",
+    breakdown:"By currency",
+    donTitle:"Tip details", rankTitle:"Videos ranked", tabhint:"Click a header to sort",
+    thTitle:"Title", thTips:"Tips", thAmount:"Amount", thViews:"Views",
+    noTips:"No tips yet",
+    errParse:"Couldn't parse this file. Make sure it's a .json or .csv exported by yt_superthanks.",
+    errEmpty:"No videos found in this report.",
+    footPrivacy:"A fully static page; all parsing happens locally in your browser.", footRepo:"Source code"
+  },
+  "ja":{
+    title:(h)=>`YouTube <span class="grad">Super Thanks</span> レポートビューア`,
+    tagline:"スキャナーが書き出したレポートを開くと、Appleふうのダッシュボードがすぐ表示されます。すべてブラウザ内で処理され、アップロードはされません。",
+    dropBig:"レポートファイルをここにドロップ",
+    dropSmall:"yt_superthanks が書き出した .json / .csv に対応",
+    pickBtn:"ファイルを選択", pasteBtn:"JSONを貼り付け", pasteGo:"読み込む",
+    loadAnother:"別のを読み込む",
+    howToSummary:"レポートはどこから？（ローカルで生成、数ステップ）",
+    howToBody:"ブラウザはYouTubeを直接取得できない（クロスオリジン制限）ため、スキャンはローカルのPythonツールで行い、書き出したレポートをこのページにドラッグして表示します。",
+    howToCmd:"pip3 install -U yt-dlp\npython3 yt_superthanks.py \"https://www.youtube.com/@channel\" -c USD\n# superthanks_report.json が生成 → ここにドロップ",
+    statTotal:"投げ銭合計（総額）", statTips:"投げ銭件数", statVids:"動画数（投げ銭あり / 全体）",
+    grossNote:"総額＝視聴者が支払った合計。YouTubeの約30%の手数料を引き、クリエイターの取り分は約70%です。金額はレポート書き出し時の通貨です。",
+    breakdown:"通貨別",
+    donTitle:"投げ銭の明細", rankTitle:"動画ランキング", tabhint:"見出しをクリックで並べ替え",
+    thTitle:"タイトル", thTips:"件数", thAmount:"金額", thViews:"再生",
+    noTips:"投げ銭はまだありません",
+    errParse:"このファイルを解析できません。yt_superthanks が書き出した .json / .csv かご確認ください。",
+    errEmpty:"レポートに動画データがありません。",
+    footPrivacy:"完全な静的ページ。解析はすべてブラウザ内でローカルに行われます。", footRepo:"ソースコード"
+  },
+  "ko":{
+    title:(h)=>`YouTube <span class="grad">Super Thanks</span> 리포트 뷰어`,
+    tagline:"스캐너가 내보낸 리포트를 열면 애플 스타일 대시보드가 바로 표시됩니다. 모든 처리는 브라우저 안에서만 이뤄지며 업로드되지 않습니다.",
+    dropBig:"리포트 파일을 여기에 놓으세요",
+    dropSmall:"yt_superthanks가 내보낸 .json 또는 .csv 지원",
+    pickBtn:"파일 선택", pasteBtn:"JSON 붙여넣기", pasteGo:"불러오기",
+    loadAnother:"다른 파일 불러오기",
+    howToSummary:"리포트는 어디서 오나요? (로컬에서 생성, 몇 단계)",
+    howToBody:"브라우저는 YouTube를 직접 수집할 수 없어(교차 출처 제한) 스캔은 로컬 Python 도구로 하고, 내보낸 리포트를 이 페이지에 끌어다 놓아 봅니다.",
+    howToCmd:"pip3 install -U yt-dlp\npython3 yt_superthanks.py \"https://www.youtube.com/@channel\" -c USD\n# superthanks_report.json 생성 → 여기로 드롭",
+    statTotal:"총 후원(총액)", statTips:"후원 건수", statVids:"영상 수(후원 있음 / 전체)",
+    grossNote:"총액＝시청자가 지불한 합계. YouTube가 약 30%를 가져가고 크리에이터는 약 70%를 받습니다. 금액은 리포트를 내보낸 통화 기준입니다.",
+    breakdown:"통화별",
+    donTitle:"후원 내역", rankTitle:"영상 순위", tabhint:"머리글을 클릭해 정렬",
+    thTitle:"제목", thTips:"건수", thAmount:"금액", thViews:"조회수",
+    noTips:"아직 후원이 없습니다",
+    errParse:"이 파일을 해석할 수 없습니다. yt_superthanks가 내보낸 .json 또는 .csv인지 확인하세요.",
+    errEmpty:"리포트에 영상 데이터가 없습니다.",
+    footPrivacy:"완전한 정적 페이지이며 모든 해석은 브라우저에서 로컬로 처리됩니다.", footRepo:"소스 코드"
+  },
+  "es":{
+    title:(h)=>`Visor de informes de <span class="grad">Super Thanks</span> de YouTube`,
+    tagline:"Abre un informe exportado por el escáner y mira un panel estilo Apple al instante. Todo ocurre en tu navegador; no se sube nada.",
+    dropBig:"Suelta un archivo de informe aquí",
+    dropSmall:"Admite el .json o .csv exportado por yt_superthanks",
+    pickBtn:"Elegir archivo", pasteBtn:"Pegar JSON", pasteGo:"Cargar",
+    loadAnother:"Cargar otro",
+    howToSummary:"¿De dónde salen los informes? (se generan localmente)",
+    howToBody:"Los navegadores no pueden consultar YouTube directamente (límites de origen cruzado), así que el escaneo se hace localmente con la herramienta de Python; luego arrastra el informe exportado a esta página.",
+    howToCmd:"pip3 install -U yt-dlp\npython3 yt_superthanks.py \"https://www.youtube.com/@canal\" -c USD\n# genera superthanks_report.json → suéltalo aquí",
+    statTotal:"Propinas totales (bruto)", statTips:"Propinas", statVids:"Vídeos (con propina / total)",
+    grossNote:"Bruto = lo que pagaron los espectadores; el creador se queda con ~70% tras el ~30% de YouTube. Los importes están en la moneda del informe.",
+    breakdown:"Por moneda",
+    donTitle:"Detalle de propinas", rankTitle:"Vídeos ordenados", tabhint:"Haz clic en un encabezado para ordenar",
+    thTitle:"Título", thTips:"Propinas", thAmount:"Importe", thViews:"Vistas",
+    noTips:"Aún no hay propinas",
+    errParse:"No se pudo analizar este archivo. Asegúrate de que sea un .json o .csv exportado por yt_superthanks.",
+    errEmpty:"No se encontraron vídeos en el informe.",
+    footPrivacy:"Una página totalmente estática; todo el análisis ocurre localmente en tu navegador.", footRepo:"Código fuente"
+  }
+};
+
+const $=id=>document.getElementById(id);
+const REPO_URL="https://github.com/vicky128/youtube-superthanks";
+
+/* pick best language from browser prefs */
+function detectLang(){
+  const saved=(()=>{try{return localStorage.getItem("stv_lang")}catch(e){return null}})();
+  if(saved && T[saved]) return saved;
+  const prefs=(navigator.languages&&navigator.languages.length)?navigator.languages:[navigator.language||"en"];
+  for(const p of prefs){
+    const l=(p||"").toLowerCase();
+    if(l.startsWith("zh")){ return /tw|hk|hant|mo/.test(l) ? "zh-TW" : "zh-CN"; }
+    if(l.startsWith("ja")) return "ja";
+    if(l.startsWith("ko")) return "ko";
+    if(l.startsWith("es")) return "es";
+    if(l.startsWith("en")) return "en";
+  }
+  return "en";
+}
+let lang=detectLang();
+
+function fmt(n){return (n||0).toLocaleString(undefined,{maximumFractionDigits:2,minimumFractionDigits:2});}
+function esc(s){return (s||"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
+
+function applyLang(){
+  const d=T[lang]||T.en;
+  document.documentElement.lang=lang;
+  document.querySelectorAll("[data-i]").forEach(el=>{
+    const key=el.getAttribute("data-i");
+    let v=d[key]; if(v===undefined) v=T.en[key];
+    if(typeof v==="function") el.innerHTML=v();
+    else el.textContent=v;
+  });
+  // build language select
+  const sel=$("lang");
+  if(!sel.options.length){
+    for(const code in LANGS){const o=document.createElement("option");o.value=code;o.textContent=LANGS[code];sel.appendChild(o);}
+  }
+  sel.value=lang;
+  if(current) render(current); // re-render loaded data with new strings
+}
+$("lang").onchange=e=>{lang=e.target.value;try{localStorage.setItem("stv_lang",lang)}catch(_){}applyLang();};
+
+/* ---------------- data loading ---------------- */
+let current=null, sortK="total", sortAsc=false;
+
+function showBanner(msg){const b=$("banner");b.textContent=msg;b.classList.remove("hide");}
+function hideBanner(){$("banner").classList.add("hide");}
+
+function parseCSV(text){
+  const lines=text.split(/\r?\n/).filter(l=>l.trim().length);
+  if(!lines.length) return null;
+  const head=splitCsvLine(lines[0]);
+  const tIdx=head.findIndex(h=>/^total[_ ]/i.test(h));
+  const cur=tIdx>=0?(head[tIdx].split(/[_ ]/)[1]||"").toUpperCase():"USD";
+  const col=name=>head.findIndex(h=>h.toLowerCase()===name);
+  const idI=col("video_id"),tiI=col("title"),upI=col("upload_date"),
+        tpI=col("tip_count"),vwI=col("view_count");
+  const videos=lines.slice(1).map(ln=>{
+    const c=splitCsvLine(ln);
+    return {id:c[idI]||"",title:c[tiI]||"",upload_date:c[upI]||"",
+      tip_count:+(c[tpI]||0)||0, total:+(c[tIdx]||0)||0, view_count:+(c[vwI]||0)||0};
+  }).filter(v=>v.id);
+  const grand=videos.reduce((s,v)=>s+(v.total||0),0);
+  const tips=videos.reduce((s,v)=>s+(v.tip_count||0),0);
+  return {currency:cur,grand_total:Math.round(grand*100)/100,total_tips:tips,videos:videos,_csv:true};
+}
+function splitCsvLine(line){
+  const out=[];let cur="",q=false;
+  for(let i=0;i<line.length;i++){const ch=line[i];
+    if(q){ if(ch==='"'){ if(line[i+1]==='"'){cur+='"';i++;} else q=false; } else cur+=ch; }
+    else{ if(ch===','){out.push(cur);cur="";} else if(ch==='"')q=true; else cur+=ch; }
+  }
+  out.push(cur);return out;
+}
+function parseReport(text,name){
+  text=text.trim();
+  try{
+    if(text[0]==="{"||text[0]==="["){
+      let j=JSON.parse(text);
+      if(Array.isArray(j)) j={currency:"USD",videos:j};
+      if(!j.videos||!Array.isArray(j.videos)) return null;
+      if(j.grand_total==null) j.grand_total=Math.round(j.videos.reduce((s,v)=>s+(v.total||0),0)*100)/100;
+      if(j.total_tips==null) j.total_tips=j.videos.reduce((s,v)=>s+(v.tip_count||0),0);
+      if(!j.currency) j.currency="USD";
+      return j;
+    }
+  }catch(e){/* fall through to CSV */}
+  // CSV
+  if(/,/.test(text) && /total[_ ]/i.test(text.split(/\r?\n/)[0]||"")) return parseCSV(text);
+  return null;
+}
+function loadText(text,name){
+  hideBanner();
+  const rep=parseReport(text,name);
+  const d=T[lang]||T.en;
+  if(!rep){showBanner(d.errParse);return;}
+  if(!rep.videos.length){showBanner(d.errEmpty);return;}
+  rep._name=name||"";
+  current=rep;
+  $("loadcard").classList.add("hide");
+  render(rep);
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+/* ---------------- rendering ---------------- */
+function aggBreakdown(rep){
+  const bd={};
+  rep.videos.forEach(v=>{const bc=v.by_currency||{};for(const k in bc)bd[k]=(bd[k]||0)+bc[k];});
+  return bd;
+}
+function render(rep){
+  const d=T[lang]||T.en, cur=rep.currency||"USD";
+  // summary
+  $("summary").classList.remove("hide");
+  const single=rep.videos.length===1;
+  const name=single?(rep.videos[0].title||rep.videos[0].id):(rep._name||"");
+  $("repTitle").textContent=name||"";
+  $("s_total").textContent=cur+" "+fmt(rep.grand_total);
+  $("s_tips").textContent=(rep.total_tips||0).toLocaleString();
+  const withTips=rep.videos.filter(v=>(v.tip_count||0)>0).length;
+  $("s_vids").textContent=withTips+" / "+rep.videos.length;
+  // breakdown
+  const bd=aggBreakdown(rep);
+  const entries=Object.entries(bd).sort((a,b)=>b[1]-a[1]);
+  $("breakdown").innerHTML=entries.length
+    ? entries.map(([k,v])=>`<span class="chip">${k} <b>${fmt(v)}</b></span>`).join("")
+    : `<span class="chip">${esc(d.noTips)}</span>`;
+
+  // single-video donation list
+  if(single && (rep.videos[0].chips||[]).length){
+    $("donwrap").classList.remove("hide");
+    const chips=rep.videos[0].chips;
+    $("donpill").textContent=chips.length;
+    $("donlist").innerHTML=chips.map(c=>`<div class="don"><span class="amt">${esc(c)}</span></div>`).join("");
+  }else{
+    $("donwrap").classList.add("hide");
+  }
+
+  // ranking table (hide for single video)
+  if(single){ $("tablewrap").classList.add("hide"); }
+  else{
+    $("tablewrap").classList.remove("hide");
+    $("tabhint").textContent=d.tabhint;
+    renderTable(rep);
+  }
+}
+function renderTable(rep){
+  const r=[...rep.videos].sort((a,b)=>{
+    let x=a[sortK],y=b[sortK];
+    if(sortK==="title"){x=x||"";y=y||"";return sortAsc?x.localeCompare(y):y.localeCompare(x);}
+    x=x||0;y=y||0;return sortAsc?x-y:y-x;
+  });
+  $("tbody").innerHTML=r.map((v,i)=>`<tr>
+    <td class="num">${i+1}</td>
+    <td><a href="https://youtu.be/${esc(v.id)}" target="_blank" rel="noopener">${esc(v.title||v.id)}</a>${v.error?' <span class="err pill">!</span>':''}</td>
+    <td class="num">${(v.tip_count||0).toLocaleString()}</td>
+    <td class="num">${v.total?fmt(v.total):'—'}</td>
+    <td class="num">${v.view_count?(+v.view_count).toLocaleString():'—'}</td></tr>`).join("");
+}
+document.querySelectorAll("th[data-k]").forEach(th=>th.onclick=()=>{
+  const k=th.dataset.k; if(sortK===k)sortAsc=!sortAsc; else{sortK=k;sortAsc=false;}
+  if(current)renderTable(current);
+});
+
+/* ---------------- input wiring ---------------- */
+$("pick").onclick=()=>$("file").click();
+$("file").onchange=e=>{const f=e.target.files[0];if(!f)return;
+  const rd=new FileReader();rd.onload=()=>loadText(rd.result,f.name);rd.readAsText(f);};
+$("togglePaste").onclick=()=>$("pasteWrap").classList.toggle("hide");
+$("pasteGo").onclick=()=>{const t=$("paste").value;if(t.trim())loadText(t,"pasted");};
+$("loadAnother").onclick=()=>{
+  current=null;$("loadcard").classList.remove("hide");
+  ["summary","donwrap","tablewrap"].forEach(x=>$(x).classList.add("hide"));
+  window.scrollTo({top:0,behavior:"smooth"});
+};
+const drop=$("drop");
+["dragenter","dragover"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add("over");}));
+["dragleave","drop"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove("over");}));
+drop.addEventListener("drop",e=>{const f=e.dataTransfer.files[0];if(!f)return;
+  const rd=new FileReader();rd.onload=()=>loadText(rd.result,f.name);rd.readAsText(f);});
+drop.addEventListener("click",()=>$("file").click());
+
+/* ---------------- boot ---------------- */
+$("repoLink").href=REPO_URL;
+applyLang();
+// auto-load: ?src=<url>  then  ./data/sample.json
+(function autoload(){
+  const params=new URLSearchParams(location.search);
+  const src=params.get("src")||params.get("data");
+  const url=src||"./data/sample.json";
+  fetch(url,{cache:"no-store"}).then(r=>{if(!r.ok)throw 0;return r.text();})
+    .then(t=>loadText(t,src?src:"sample"))
+    .catch(()=>{/* no default data: keep loader visible */});
+})();
+</script>
+</body></html>

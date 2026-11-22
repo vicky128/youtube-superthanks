@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Tool output / runtime
+server.log
+*.log
+superthanks_report.*
+superthanks_cache.json
+*cache*.json
+cookies.txt
+
+# Keep the demo sample the Pages site loads
+!data/sample.json
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

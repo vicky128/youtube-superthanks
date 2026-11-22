@@ -85,6 +85,9 @@ input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 4px var(--a
 .row{display:flex;gap:14px;flex-wrap:wrap}
 .row>div{flex:1;min-width:130px}
 .urlrow{flex:3 1 280px}
+/* advanced grid: inputs bottom-align even when labels wrap to different line counts */
+.adv{align-items:flex-end}
+.adv label{min-height:34px;line-height:1.35}
 button{background:var(--accent);border:0;color:#fff;font-weight:400;
 border-radius:980px;padding:12px 26px;font-size:17px;cursor:pointer;
 transition:background .15s,transform .06s,opacity .15s;line-height:1.2}
@@ -164,7 +167,7 @@ border-radius:999px;padding:2px 9px;margin-left:8px}
   </div>
   <details>
     <summary data-i="advanced"></summary>
-    <div class="row" style="margin-top:10px">
+    <div class="row adv" style="margin-top:10px">
       <div><label data-i="lblLimit"></label><input id="limit" type="number" value="0" min="0"></div>
       <div><label data-i="lblMaxc"></label><input id="maxc" value="1500"></div>
       <div><label data-i="lblWorkers"></label>

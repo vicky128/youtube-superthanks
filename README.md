@@ -18,6 +18,15 @@ and auto‑detect your browser language, with a switcher in the top‑right.
 
 > 🔗 **Live viewer:** https://vicky128.github.io/youtube-superthanks/
 
+> 💡 **Recommended — run it locally.** I personally suggest downloading the repo and
+> running the scanner on your own machine (`yt_superthanks.py` or `superthanks_ui.py`).
+> It's the most reliable path and gives exact, complete channel totals. The hosted page
+> is only a **viewer** for a report you've already generated — it can't scan YouTube itself.
+>
+> 💡 **更推荐本地运行。** 我个人建议把仓库下载下来，在自己电脑上直接跑扫描器
+> （`yt_superthanks.py` 或 `superthanks_ui.py`）——这是最稳、结果最完整准确的方式。
+> 线上页面只是用来**查看**你已经生成好的报告，它本身无法扫描 YouTube。
+
 ---
 
 ## English
